@@ -14,13 +14,17 @@ from .model import DiseaseModel
 ROOT = Path(__file__).resolve().parent.parent
 MODEL_PATH = Path(os.getenv("CLASSIFIER_MODEL", ROOT / "PVDS_deploy.pt"))
 YOLO_MODEL = os.getenv("YOLO_MODEL", "yolov8s-worldv2.pt")
-LEAF_CONFIDENCE = float(os.getenv("LEAF_CONFIDENCE", "0.15"))
+LEAF_CONFIDENCE = float(os.getenv("LEAF_CONFIDENCE", "0.05"))
 OTHER_OBJECT_CONFIDENCE = float(os.getenv("OTHER_OBJECT_CONFIDENCE", "0.35"))
+PLANT_LABELS = ("leaf", "plant", "foliage", "vegetation", "crop", "flower")
 
 app = FastAPI(title="PVDS Plant Disease API", version="1.0.0")
 classifier = DiseaseModel(MODEL_PATH)
 yolo = YOLO(YOLO_MODEL)
-yolo.set_classes(["leaf", "plant leaf", "person", "car", "truck", "animal", "building", "phone", "laptop"])
+yolo.set_classes([
+    "leaf", "plant leaf", "foliage", "vegetation", "crop", "flower", "plant",
+    "person", "car", "truck", "animal", "building", "phone", "laptop",
+])
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -107,7 +111,8 @@ async def predict(image: UploadFile = File(...)) -> dict:
         label = result.names[int(box.cls[0])]
         confidence = float(box.conf[0])
         detections.append({"label": label, "confidence": round(confidence, 4)})
-        if "leaf" in label.lower() and confidence >= LEAF_CONFIDENCE:
+        normalized_label = label.lower()
+        if any(plant_label in normalized_label for plant_label in PLANT_LABELS) and confidence >= LEAF_CONFIDENCE:
             leaf_found = True
         elif confidence >= OTHER_OBJECT_CONFIDENCE:
             invalid_objects.append(label)
