@@ -16,6 +16,7 @@ MODEL_PATH = Path(os.getenv("CLASSIFIER_MODEL", ROOT / "PVDS_deploy.pt"))
 YOLO_MODEL = os.getenv("YOLO_MODEL", "yolov8s-worldv2.pt")
 LEAF_CONFIDENCE = float(os.getenv("LEAF_CONFIDENCE", "0.05"))
 OTHER_OBJECT_CONFIDENCE = float(os.getenv("OTHER_OBJECT_CONFIDENCE", "0.35"))
+CLASSIFIER_FALLBACK_CONFIDENCE = float(os.getenv("CLASSIFIER_FALLBACK_CONFIDENCE", "0.20"))
 PLANT_LABELS = ("leaf", "plant", "foliage", "vegetation", "crop", "flower")
 
 app = FastAPI(title="PVDS Plant Disease API", version="1.0.0")
@@ -118,9 +119,8 @@ async def predict(image: UploadFile = File(...)) -> dict:
             invalid_objects.append(label)
     if invalid_objects:
         raise HTTPException(status_code=422, detail={"message": "Non-leaf object detected.", "objects": sorted(set(invalid_objects)), "detections": detections})
-    if not leaf_found:
-        raise HTTPException(status_code=422, detail={"message": "No plant leaf detected. Upload a clear leaf image.", "detections": detections})
-
     label, confidence = classifier.predict(picture)
+    if not leaf_found and confidence < CLASSIFIER_FALLBACK_CONFIDENCE:
+        raise HTTPException(status_code=422, detail={"message": "No plant leaf detected. Upload a clear leaf image.", "detections": detections, "classifier_confidence": round(confidence, 4)})
     plant, disease = label.split("___", 1)
-    return {"plant": plant, "disease": disease, "class": label, "confidence": round(confidence, 4), "detections": detections}
+    return {"plant": plant, "disease": disease, "class": label, "confidence": round(confidence, 4), "detections": detections, "leaf_detector_used": leaf_found}
