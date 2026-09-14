@@ -13,6 +13,8 @@ uvicorn app.main:app --reload
 
 Open `http://localhost:8000/docs` for the interactive API. The first start downloads the YOLO-World weights. Keep `PVDS_deploy.pt` in the project root.
 
+For the browser demo, open `http://localhost:8000/`, choose a plant-leaf image, and click **Classify image**. The page shows the plant, disease, confidence, and detector results.
+
 ## Deploy on Vercel
 
 1. Push this folder, including `PVDS_deploy.pt`, to a private GitHub repository.
