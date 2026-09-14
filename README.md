@@ -30,6 +30,6 @@ Set these optional Vercel environment variables when needed:
 - `LEAF_CONFIDENCE`: defaults to `0.15`.
 - `OTHER_OBJECT_CONFIDENCE`: defaults to `0.35`.
 
-Important: PyTorch plus Ultralytics is a large dependency for a serverless function. If Vercel rejects the deployment because the function exceeds its size limit, or if cold starts/timeouts are too slow, keep the frontend/API on Vercel and move inference to a container service such as Render, Railway, or Modal. The current Vercel configuration uses a 60-second timeout and 3008 MB memory where the selected Vercel plan permits it.
+Important: PyTorch plus Ultralytics is a large dependency for a serverless function. This project is configured for the Hobby plan's 2048 MB memory limit. If Vercel rejects the deployment because the function exceeds its size limit, or if cold starts/timeouts are too slow, keep the frontend/API on Vercel and move inference to a container service such as Render, Railway, or Modal.
 
 `YOLO_MODEL` may be changed to a custom Ultralytics leaf detector. For a production-grade leaf gate, use a detector trained with a `leaf` class; the open-vocabulary model is a useful baseline but cannot guarantee leaf detection on every crop.
